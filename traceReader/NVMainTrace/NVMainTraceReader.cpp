@@ -92,12 +92,11 @@ bool NVMainTraceReader::GetNextAccess( TraceLine *nextAccess )
     std::string fullLine;
 
     /* We will read in a full line and fill in these values */
-    unsigned int cycle = 0;
-    OpType operation = READ;
+    OpCode operation = NOP;
     uint64_t address;
-    NVMDataBlock dataBlock;
-    NVMDataBlock oldDataBlock;
-    unsigned int threadId = 0;
+    ncycle_t cycle = 0;
+    uint64_t vsize = 0;
+    uint64_t psumTag = 0;
     
     /* There are no more lines in the trace... Send back a "dummy" line */
     getline( trace, fullLine );
@@ -105,21 +104,9 @@ bool NVMainTraceReader::GetNextAccess( TraceLine *nextAccess )
     {
         NVMAddress nAddress;
         nAddress.SetPhysicalAddress( 0xDEADC0DEDEADBEEFULL );
-        nextAccess->SetLine( nAddress, NOP, 0, dataBlock, oldDataBlock, 0 );
+        nextAccess->SetLine( nAddress, NOP, 0, 0, 0 );
         std::cout << "NVMainTraceReader: Reached EOF!" << std::endl;
         return false;
-    }
-
-    if( !readVersion )
-    {
-        if( fullLine.substr( 0, 4 ) == "NVMV" )
-        {
-            std::string versionString = fullLine.substr( 4, std::string::npos );
-            traceVersion = atoi( versionString.c_str( ) );
-        }
-
-        readVersion = true;
-        getline( trace, fullLine );
     }
     
     std::istringstream lineStream( fullLine );
@@ -129,6 +116,9 @@ bool NVMainTraceReader::GetNextAccess( TraceLine *nextAccess )
     /*
      *  Again, the format is : CYCLE OP ADDRESS DATA THREADID
      *  So the field ids are :   0    1    2      3      4
+     * 
+     *  Now, the format is : CYCLE OP ADDRESS VSIZE PSUMTAG
+     *  So the field ids are : 0   1     2      3     4
      */
     while( getline( lineStream, field, ' ' ) )
     {
@@ -138,10 +128,8 @@ bool NVMainTraceReader::GetNextAccess( TraceLine *nextAccess )
                 cycle = atoi( field.c_str( ) );
             else if( fieldId == 1 )
             {
-                if( field == "R" )
-                    operation = READ;
-                else if( field == "W" )
-                    operation = WRITE;
+                if( field == "sum" )
+                    operation = SUM;
                 else
                     std::cout << "Warning: Unknown operation `" 
                         << field << "'" << std::endl;
@@ -155,77 +143,13 @@ bool NVMainTraceReader::GetNextAccess( TraceLine *nextAccess )
             }
             else if( fieldId == 3 )
             {
-                int byte;
-                int start, end;
-
-                /* Assumes 64-byte memory words.... */
-                // TODO: Drop assumption and use field.length()/2 bytes
-                assert(sizeof(uint64_t)*8 == 64);
-                assert(field.length() == 128); // 1 char per 4 bits
-
-                dataBlock.SetSize( 64 );
-
-                uint32_t *rawData = reinterpret_cast<uint32_t*>(dataBlock.rawData);
-                memset(rawData, 0, 64);
-                
-                for( byte = 0; byte < 16; byte++ )
-                {
-                    std::stringstream fmat;
-
-                    end = 8*byte + 8;
-                    start = 8*byte;
-
-                    fmat << std::hex << field.substr( start, end - start );
-                    fmat >> rawData[byte];
-                    rawData[byte] = htonl( rawData[byte] );
-                }
+                vsize = atoi( field.c_str( ) );
             }
             else if( fieldId == 4 )
             {
-                if( traceVersion == 0 )
-                {
-                    threadId = atoi( field.c_str( ) );
-
-                    /* Zero out old data in 1.0 trace format. */
-                    oldDataBlock.SetSize( 64 );
-
-                    uint64_t *rawData = reinterpret_cast<uint64_t*>(oldDataBlock.rawData);
-                    memset(rawData, 0, 64);
-                }
-                else
-                {
-                    int byte;
-                    int start, end;
-
-                    /* Assumes 64-byte memory words.... */
-                    // TODO: Drop assumption and use field.length()/2 bytes
-                    assert(sizeof(uint64_t)*8 == 64);
-                    assert(field.length() == 128); // 1 char per 4 bits
-
-                    oldDataBlock.SetSize( 64 );
-
-                    uint32_t *rawData = reinterpret_cast<uint32_t*>(oldDataBlock.rawData);
-                    memset(rawData, 0, 64);
-                    
-                    for( byte = 0; byte < 16; byte++ )
-                    {
-                        std::stringstream fmat;
-
-                        end = 8*byte + 8;
-                        start = 8*byte;
-
-                        fmat << std::hex << field.substr( start, end - start );
-                        fmat >> rawData[byte];
-                        rawData[byte] = htonl( rawData[byte] );
-                    }
-                }
+                psumTag = atoi( field.c_str( ) );
             }
-            else if( fieldId == 5 )
-            {
-                assert( traceVersion != 0 );
-                threadId = atoi( field.c_str( ) );
-            }
-            
+
             fieldId++;
         }
     }
@@ -234,19 +158,11 @@ bool NVMainTraceReader::GetNextAccess( TraceLine *nextAccess )
 
     linenum++;
 
-    if( operation != READ && operation != WRITE )
-        std::cout << "NVMainTraceReader: Unknown Operation: " << operation 
-            << "Line number is " << linenum << ". Full Line is \"" << fullLine 
-            << "\"" << std::endl;
-
-    /*
-     *  Set the line parameters.
-     */
     NVMAddress nAddress;
 
     nAddress.SetPhysicalAddress( address );
 
-    nextAccess->SetLine( nAddress, operation, cycle, dataBlock, oldDataBlock, threadId );
+    nextAccess->SetLine( nAddress, operation, cycle, vsize, psumTag );
 
     return true;
 }

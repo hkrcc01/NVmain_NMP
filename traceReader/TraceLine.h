@@ -34,7 +34,7 @@
 #ifndef __TRACELINE_H__
 #define __TRACELINE_H__
 
-#include "include/NVMainRequest.h"
+#include "include/NMPInst.h"
 #include "include/NVMAddress.h"
 #include "include/NVMTypes.h"
 
@@ -46,24 +46,24 @@ class TraceLine
     TraceLine();
     ~TraceLine();
     
-    void SetLine( NVMAddress& addr, OpType op, ncycle_t cycle, 
-                  NVMDataBlock& data, NVMDataBlock& oldData,
-                  ncounters_t threadId );
+    void SetLine( NVMAddress& addr, OpCode op, ncycle_t cycle, 
+                  uint64_t vsize, uint64_t pt );
 
     NVMAddress& GetAddress( );
-    OpType GetOperation( );
+    OpCode GetOperation( );
     ncycle_t GetCycle( );
-    NVMDataBlock& GetData( );
-    NVMDataBlock& GetOldData( );
-    ncounters_t GetThreadId( );
+    uint64_t GetVsize( );
+    uint64_t GetPsumTag( );
+    bool GetLocalityBit( );
 
   private:
     NVMAddress address;
-    OpType operation;
+    OpCode operation;
     ncycle_t cycle;
-    NVMDataBlock data;
-    NVMDataBlock oldData;
-    ncounters_t threadId;
+    uint64_t vsize;
+    uint64_t psumTag;
+    bool localityBit;
+
 };
 
 };

@@ -42,7 +42,6 @@
 
 namespace NVM {
 
-
 class TraceMain : public NVMObject
 {
   public:
@@ -58,7 +57,6 @@ class TraceMain : public NVMObject
   private:
     ncounter_t outstandingRequests;
 };
-
 
 };
 
