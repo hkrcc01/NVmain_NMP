@@ -1,1 +1,1 @@
-/root/NVmain/Endurance/Distributions/Normal.cpp
+/root/Documents/hubPoj/NVmain/Endurance/Distributions/Normal.cpp

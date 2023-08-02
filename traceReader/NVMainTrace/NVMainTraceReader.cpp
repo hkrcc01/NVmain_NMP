@@ -92,7 +92,7 @@ bool NVMainTraceReader::GetNextAccess( TraceLine *nextAccess )
     std::string fullLine;
 
     /* We will read in a full line and fill in these values */
-    OpCode operation = NOP;
+    OpType operation = NOP;
     uint64_t address;
     ncycle_t cycle = 0;
     uint64_t vsize = 0;

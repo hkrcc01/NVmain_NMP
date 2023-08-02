@@ -1,1 +1,1 @@
-/root/NVmain/Endurance/WordModel/WordModel.cpp
+/root/Documents/hubPoj/NVmain/Endurance/WordModel/WordModel.cpp

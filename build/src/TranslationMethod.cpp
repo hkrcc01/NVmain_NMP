@@ -1,1 +1,1 @@
-/root/NVmain/src/TranslationMethod.cpp
+/root/Documents/hubPoj/NVmain/src/TranslationMethod.cpp

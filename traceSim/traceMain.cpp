@@ -83,9 +83,9 @@ int TraceMain::RunTrace( int argc, char *argv[] )
     EventQueue *mainEventQueue = new EventQueue( );
     GlobalEventQueue *globalEventQueue = new GlobalEventQueue( );
     TagGenerator *tagGenerator = new TagGenerator( 1000 );
-    bool IgnoreData = false;
+    //bool IgnoreData = false;
 
-    uint64_t simulateCycles;
+    //uint64_t simulateCycles;
     uint64_t currentCycle;
 
     /* Print out the command line that was provided. */
@@ -110,10 +110,10 @@ int TraceMain::RunTrace( int argc, char *argv[] )
                          std::ofstream::out | std::ofstream::app );
     }
 
-    if( config->KeyExists( "IgnoreData" ) && config->GetString( "IgnoreData" ) == "true" )
-    {
-        IgnoreData = true;
-    }
+    // if( config->KeyExists( "IgnoreData" ) && config->GetString( "IgnoreData" ) == "true" )
+    // {
+    //     IgnoreData = true;
+    // }
 
     /*  Add any specified hooks */
     std::vector<std::string>& hookList = config->GetHooks( );
@@ -160,47 +160,39 @@ int TraceMain::RunTrace( int argc, char *argv[] )
     currentCycle = 0;
     while( 1 )
     {
-        if ( !trace->GetNextAccess( tl ) )
+        if( !trace->GetNextAccess( tl ) )
         {
+            /* Force all modules to drain requests. */
+            bool draining = Drain( );
+
+            std::cout << "Could not read next line from trace file!" 
+                << std::endl;
+
+            /* Wait for requests to drain. */
+            while( outstandingRequests > 0 )
+            {
+                globalEventQueue->Cycle( 1 );
+              
+                currentCycle++;
+
+                /* Retry drain each cycle if it failed. */
+                if( !draining )
+                    draining = Drain( );
+            }
+
             break;
         }
 
-        NMPInst *inst = new NMPInst( );
-        inst->setNMPInst(tl->GetAddress( ), tl->GetOperation( ), tl->GetCycle( ), tl->GetVsize( ), tl->GetPsumTag( ) );
+        NVMainRequest *request = new NVMainRequest( );
         
-        // if( !trace->GetNextAccess( tl ) )
-        // {
-        //     /* Force all modules to drain requests. */
-        //     bool draining = Drain( );
-
-        //     std::cout << "Could not read next line from trace file!" 
-        //         << std::endl;
-
-        //     /* Wait for requests to drain. */
-        //     while( outstandingRequests > 0 )
-        //     {
-        //         globalEventQueue->Cycle( 1 );
-              
-        //         currentCycle++;
-
-        //         /* Retry drain each cycle if it failed. */
-        //         if( !draining )
-        //             draining = Drain( );
-        //     }
-
-        //     break;
-        // }
-
-        // NVMainRequest *request = new NVMainRequest( );
-        
-        // request->address = tl->GetAddress( );
-        // request->type = tl->GetOperation( );
-        // request->bulkCmd = CMD_NOP;
-        // request->threadId = tl->GetThreadId( );
-        // if( !IgnoreData ) request->data = tl->GetData( );
-        // if( !IgnoreData ) request->oldData = tl->GetOldData( );
-        // request->status = MEM_REQUEST_INCOMPLETE;
-        // request->owner = (NVMObject *)this;
+        request->address = tl->GetAddress( );
+        request->type = tl->GetOperation( );
+        request->vsize = tl->GetVsize( );
+        request->psumTag = tl->GetPsumTag( );
+        request->bulkCmd = CMD_NOP;
+        request->threadId = 0;
+        request->status = MEM_REQUEST_INCOMPLETE;
+        request->owner = (NVMObject *)this;
         
         /* 
          * If you want to ignore the cycles used in the trace file, just set
@@ -228,47 +220,47 @@ int TraceMain::RunTrace( int argc, char *argv[] )
         // }
         // else
         // {
-        //     /* 
-        //      *  If the command is in the past, it can be issued. This would 
-        //      *  occur since the trace was probably generated with an inaccurate 
-        //      *  memory *  simulator, so the cycles may not match up. Otherwise, 
-        //      *  we need to wait.
-        //      */
-        //     if( tl->GetCycle( ) > currentCycle )
-        //     {
-        //         globalEventQueue->Cycle( tl->GetCycle() - currentCycle );
-        //         currentCycle = globalEventQueue->GetCurrentCycle( );
+            /* 
+             *  If the command is in the past, it can be issued. This would 
+             *  occur since the trace was probably generated with an inaccurate 
+             *  memory *  simulator, so the cycles may not match up. Otherwise, 
+             *  we need to wait.
+             */
+            if( tl->GetCycle( ) > currentCycle )
+            {
+                globalEventQueue->Cycle( tl->GetCycle() - currentCycle );
+                currentCycle = globalEventQueue->GetCurrentCycle( );
 
-        //         if( currentCycle >= simulateCycles && simulateCycles != 0 )
-        //             break;
-        //     }
+                // if( currentCycle >= simulateCycles && simulateCycles != 0 )
+                //     break;
+            }
 
-        //     /* 
-        //      *  Wait for the memory controller to accept the next command.. 
-        //      *  the trace reader is "stalling" until then.
-        //      */
-        //     while( !GetChild( )->IsIssuable( request ) )
-        //     {
-        //         if( currentCycle >= simulateCycles && simulateCycles != 0 )
-        //             break;
+            /* 
+             *  Wait for the memory controller to accept the next command.. 
+             *  the trace reader is "stalling" until then.
+             */
+            while( !GetChild( )->IsIssuable( request ) )
+            {
+                // if( currentCycle >= simulateCycles && simulateCycles != 0 )
+                //     break;
 
-        //         globalEventQueue->Cycle( 1 );
-        //         currentCycle = globalEventQueue->GetCurrentCycle( );
-        //     }
+                globalEventQueue->Cycle( 1 );
+                currentCycle = globalEventQueue->GetCurrentCycle( );
+            }
 
-        //     outstandingRequests++; 
+            outstandingRequests++; 
 
-        //     GetChild( )->IssueCommand( request );
+            GetChild( )->IssueCommand( request );
 
-        }
+        // }
     }
 
     GetChild( )->CalculateStats( );
     std::ostream& refStream = (statStream.is_open()) ? statStream : std::cout;
     stats->PrintAll( refStream );
 
-    std::cout << "Exiting at cycle " << currentCycle << " because simCycles " 
-        << simulateCycles << " reached." << std::endl; 
+    // std::cout << "Exiting at cycle " << currentCycle << " because simCycles " 
+    //     << simulateCycles << " reached." << std::endl; 
     if( outstandingRequests > 0 )
         std::cout << "Note: " << outstandingRequests << " requests still in-flight."
                   << std::endl;
@@ -295,5 +287,4 @@ bool TraceMain::RequestComplete( NVMainRequest* request )
 
     return true;
 }
-
 

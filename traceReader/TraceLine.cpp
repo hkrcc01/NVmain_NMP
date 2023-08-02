@@ -44,6 +44,7 @@ TraceLine::TraceLine( )
     address.SetPhysicalAddress( 0xDEADC0DE0BADC0DEULL );
     operation = NOP;
     cycle = 0; 
+    threadId = 0;
     vsize = 0;
     localityBit = false;
 }
@@ -54,13 +55,23 @@ TraceLine::~TraceLine( )
 }
 
 /* Set the values of the address and memory operation. */
-void TraceLine::SetLine( NVMAddress& addr, OpCode op, ncycle_t cycle, uint64_t vsize, uint64_t pt )
+void TraceLine::SetLine( NVMAddress& addr, OpType op, ncycle_t cycle, uint64_t vsize, uint64_t pt )
 {
     this->address = addr;
     this->operation = op;
     this->cycle = cycle;
     this->vsize = vsize;
     this->psumTag = pt;
+}
+
+void TraceLine::SetLine( NVMAddress& addr, OpType op, ncycle_t cy, NVMDataBlock& data, NVMDataBlock& oldData, ncounters_t threadId )
+{
+    this->address = addr;
+    this->operation = op;
+    this->cycle = cy;
+    this->data = data;
+    this->oldData = oldData;
+    this->threadId = threadId;
 }
 
 /* Get the address of the memory operation. */
@@ -70,7 +81,7 @@ NVMAddress& TraceLine::GetAddress( )
 }
 
 /* Get the memory command of the operation. */
-OpCode TraceLine::GetOperation( )
+OpType TraceLine::GetOperation( )
 {
     return operation;
 }
@@ -93,4 +104,20 @@ uint64_t TraceLine::GetPsumTag( )
 bool TraceLine::GetLocalityBit( )
 {
     return localityBit;
+}
+
+
+NVMDataBlock& TraceLine::GetData( )
+{
+    return data;
+}
+
+NVMDataBlock& TraceLine::GetOldData( )
+{
+    return oldData;
+}
+
+ncounters_t TraceLine::GetThreadId( )
+{
+    return threadId;
 }

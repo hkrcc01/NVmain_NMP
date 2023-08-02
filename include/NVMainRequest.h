@@ -61,7 +61,8 @@ enum OpType
     BUS_READ,       /* Data bus read burst */
     BUS_WRITE,      /* Data bus write burst */ 
     CACHED_READ,    /* Check if read is cached anywhere in hierarchy. */
-    CACHED_WRITE    /* Check if write is cached anywhere in hierarchy. */
+    CACHED_WRITE,    /* Check if write is cached anywhere in hierarchy. */
+    SUM = READ
 };
 
 enum MemRequestStatus 
@@ -120,6 +121,7 @@ class NVMainRequest
     NVMainRequest( ) 
     { 
         type = NOP;
+        vsize = 0;
         bulkCmd = CMD_NOP; 
         threadId = 0; 
         tag = 0; 
@@ -143,6 +145,8 @@ class NVMainRequest
 
     NVMAddress address;            //< Address of request
     OpType type;                   //< Operation type of request (read, write, etc)
+    ncounter_t vsize;
+    ncounter_t psumTag;
     BulkCommand bulkCmd;           //< Bulk Commands (i.e., Read+Precharge, Write+Precharge, etc)
     ncounters_t threadId;                  //< Thread ID of issuing application
     NVMDataBlock data;             //< Data to be written, or data that would be read
@@ -189,6 +193,8 @@ const NVMainRequest& NVMainRequest::operator=( const NVMainRequest& m )
 {
     address = m.address;
     type = m.type;
+    vsize = m.vsize;
+    psumTag = m.psumTag;
     bulkCmd = m.bulkCmd;
     threadId = m.threadId;
     data = m.data;

@@ -1,1 +1,1 @@
-/root/NVmain/Ranks/StandardRank/StandardRank.cpp
+/root/Documents/hubPoj/NVmain/Ranks/StandardRank/StandardRank.cpp

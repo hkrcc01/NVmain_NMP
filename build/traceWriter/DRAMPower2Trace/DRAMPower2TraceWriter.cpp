@@ -1,1 +1,1 @@
-/root/NVmain/traceWriter/DRAMPower2Trace/DRAMPower2TraceWriter.cpp
+/root/Documents/hubPoj/NVmain/traceWriter/DRAMPower2Trace/DRAMPower2TraceWriter.cpp
