@@ -32,6 +32,7 @@
 *******************************************************************************/
 
 #include "nvmain.h"
+#include "src/Adder.h"
 #include "src/Config.h"
 #include "src/AddressTranslator.h"
 #include "src/Interconnect.h"
@@ -123,6 +124,7 @@ void NVMain::SetConfig( Config *conf, std::string memoryName, bool createChildre
 
     if( createChildren )
     {
+
         if( conf->KeyExists( "MATHeight" ) )
         {
             rows = static_cast<int>(p->MATHeight);
@@ -142,6 +144,8 @@ void NVMain::SetConfig( Config *conf, std::string memoryName, bool createChildre
             translator = DecoderFactory::CreateNewDecoder( config->GetString( "Decoder" ) );
         else
             translator = new AddressTranslator( );
+
+        adder = new Adder( );
 
         method = new TranslationMethod( );
 
@@ -170,6 +174,7 @@ void NVMain::SetConfig( Config *conf, std::string memoryName, bool createChildre
             channelConfig[i] = new Config( *config );
 
             channelConfig[i]->SetSimInterface( config->GetSimInterface( ) );
+            channelConfig[i]->setAdder( adder );
 
             confString << "CONFIG_CHANNEL" << i;
 

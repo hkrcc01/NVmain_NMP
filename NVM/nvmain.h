@@ -38,6 +38,7 @@
 #include <fstream>
 #include <stdint.h>
 #include "src/Params.h"
+
 #include "src/NVMObject.h"
 #include "src/Prefetcher.h"
 #include "include/NVMainRequest.h"
@@ -46,6 +47,7 @@
 
 namespace NVM {
 
+class Adder;
 class Config;
 class MemoryController;
 class MemoryControllerManager;
@@ -84,6 +86,7 @@ class NVMain : public NVMObject
     Config *config;
     Config **channelConfig;
     MemoryController **memoryControllers;
+    Adder *adder;
     AddressTranslator *translator;
 
     ncounter_t totalReadRequests;

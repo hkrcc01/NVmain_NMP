@@ -93,6 +93,8 @@ class Params
     double Epdps;
     double Voltage;
 
+    double Eadder;
+
     int Rtt_nom;
     int Rtt_wr;
     int Rtt_cont;
@@ -120,6 +122,8 @@ class Params
     bool UseRefresh;
     bool StaggerRefresh;
     bool UsePrecharge;
+
+    bool UseAdder;
 
     ncounter_t OffChipLatency;
 
@@ -161,6 +165,8 @@ class Params
     ncycle_t tXPDLL;
     ncycle_t tXS;
     ncycle_t tXSDLL;
+
+    ncycle_t tADDER;
 
     ncycle_t tRDPDEN; // interval between Read/ReadA and PowerDown
     ncycle_t tWRPDEN; // interval between Write and PowerDown

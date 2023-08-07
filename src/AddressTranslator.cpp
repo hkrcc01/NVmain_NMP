@@ -40,7 +40,6 @@
 #include "src/AddressTranslator.h"
 #include "include/NVMHelpers.h"
 
-
 using namespace NVM;
 
 AddressTranslator::AddressTranslator( )

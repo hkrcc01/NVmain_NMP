@@ -40,6 +40,7 @@
 #include <assert.h>
 #include <limits>
 #include "src/Config.h"
+#include "src/Adder.h"
 
 using namespace NVM;
 
@@ -77,6 +78,10 @@ Config::Config(const Config& conf)
     SetDebugLog( );
 }
 
+void Config::setAdder( Adder *adder )
+{
+    this->adder = adder;
+}
 
 std::string Config::GetFileName( )
 {
@@ -492,6 +497,11 @@ void Config::SetDebugLog( )
         std::cout << "Printing debug information to '" << debugLogFilename << "'" << std::endl;
         useDebugLog = true;
     }
+}
+
+Adder *Config::GerSystmeAdder( )
+{
+    return adder;
 }
 
 std::ostream *Config::GetDebugLog( )

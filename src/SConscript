@@ -38,6 +38,7 @@ if 'TARGET_ISA' in env and env['TARGET_ISA'] == 'no':
 if 'NVMAIN_BUILD' in env:
     NVMainSourceType('src', 'Backend Source')
 
+NVMainSource('Adder.cpp')
 NVMainSource('TranslationMethod.cpp')
 NVMainSource('AddressTranslator.cpp')
 NVMainSource('Config.cpp')

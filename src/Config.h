@@ -44,6 +44,8 @@
 
 namespace NVM {
 
+class Adder;
+
 class Config 
 {
   public:
@@ -89,7 +91,14 @@ class Config
     void SetDebugLog( );
     std::ostream *GetDebugLog( );
 
+    Adder* GerSystmeAdder( );
+
+    void setAdder( Adder *adder );
+
+    Adder *adder;
+
   private:
+
     std::string fileName;
     std::map<std::string, std::string> values;
     std::set<std::string> warned;

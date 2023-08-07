@@ -47,7 +47,8 @@
 
 #include <iostream>
 
-namespace NVM {
+namespace NVM 
+{
 
 class Event;
 
@@ -95,6 +96,7 @@ class SubArray : public NVMObject
     ncycle_t NextIssuable( NVMainRequest *request );
 
     void SetConfig( Config *c, bool createChildren = true );
+    //void SetConfig( Config *c);
 
     SubArrayState GetState( );
 

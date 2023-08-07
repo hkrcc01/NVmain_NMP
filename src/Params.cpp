@@ -77,6 +77,8 @@ Params::Params( )
     Epdps = 0.000000;
     Voltage = 1.5;
 
+    Eadder = 7.89;
+
     /* 
      * Default to 30 ohms for read. This means 60 ohms for 
      * pull up and pull down. 
@@ -120,6 +122,8 @@ Params::Params( )
     StaggerRefresh = false;
     UsePrecharge = true;
 
+    UseAdder = true;
+
     OffChipLatency = 10;
 
     PeriodicStatsInterval = 0;
@@ -160,6 +164,8 @@ Params::Params( )
     tXPDLL = 17;
     tXS = 5;
     tXSDLL = 512;
+
+    tADDER = 3;
 
     tRDPDEN = 24;
     tWRPDEN = 19;
@@ -309,6 +315,8 @@ void Params::SetParams( Config *c )
     c->GetBool( "UseRefresh", UseRefresh );
     c->GetBool( "StaggerRefresh", StaggerRefresh );
     c->GetBool( "UsePrecharge", UsePrecharge );
+
+    c->GetBool( "UseAdder", UseAdder );
 
     c->GetValueUL( "OffChipLatency", OffChipLatency );
 

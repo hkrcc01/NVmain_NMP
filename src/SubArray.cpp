@@ -32,6 +32,7 @@
 *******************************************************************************/
 
 #include "src/SubArray.h"
+#include "src/Adder.h"
 #include "src/Bank.h"
 #include "src/MemoryController.h"
 #include "src/EventQueue.h"
@@ -182,23 +183,30 @@ void SubArray::SetConfig( Config *c, bool createChildren )
     ncounter_t totalWritePulses = p->nWP00 + p->nWP01 + p->nWP10 + p->nWP11;
     averageWriteIterations = static_cast<ncounter_t>( (totalWritePulses+2)/4 );
 
-    if( createChildren )
-    {
-        /* We need to create an endurance model at a sub-array level */
-        endrModel = EnduranceModelFactory::CreateEnduranceModel( p->EnduranceModel );
-        if( endrModel )
-        {
-            endrModel->SetConfig( conf, createChildren );
-            endrModel->SetStats( GetStats( ) );
-        }
+    Adder *sysAdder = conf->GerSystmeAdder( );
+    sysAdder->SetParent( this );
+    AddChild( sysAdder );
 
-        dataEncoder = DataEncoderFactory::CreateNewDataEncoder( p->DataEncoder );
-        if( dataEncoder )
-        {
-            dataEncoder->SetConfig( conf, createChildren );
-            dataEncoder->SetStats( GetStats( ) );
-        }
-    }
+    sysAdder->SetConfig( conf, createChildren );
+    sysAdder->RegisterStats( );
+
+    // if( createChildren )
+    // {
+    //     /* We need to create an endurance model at a sub-array level */
+    //     endrModel = EnduranceModelFactory::CreateEnduranceModel( p->EnduranceModel );
+    //     if( endrModel )
+    //     {
+    //         endrModel->SetConfig( conf, createChildren );
+    //         endrModel->SetStats( GetStats( ) );
+    //     }
+
+    //     dataEncoder = DataEncoderFactory::CreateNewDataEncoder( p->DataEncoder );
+    //     if( dataEncoder )
+    //     {
+    //         dataEncoder->SetConfig( conf, createChildren );
+    //         dataEncoder->SetStats( GetStats( ) );
+    //     }
+    // }
 }
 
 void SubArray::RegisterStats( )
@@ -441,18 +449,22 @@ bool SubArray::Read( NVMainRequest *request )
      *
      *  Note: In critical word first, tBURST can be replaced with 1.
      */
+    
     /* Issue a bus burst request when the burst starts. */
-    NVMainRequest *busReq = new NVMainRequest( );
+    NVMainRequest *busReq = new NVMainRequest(  );
     *busReq = *request;
     busReq->type = BUS_WRITE;
     busReq->owner = this;
 
+    //bool success = GetChild( request )->IssueCommand( request );
+    GetChild( request )->IssueCommand( request );
+
     GetEventQueue( )->InsertEvent( EventResponse, this, busReq, 
-            GetEventQueue()->GetCurrentCycle() + p->tCAS + decLat );
+            GetEventQueue()->GetCurrentCycle() + p->tCAS + p->tADDER + decLat );
 
     /* Notify owner of read completion as well */
     GetEventQueue( )->InsertEvent( EventResponse, this, request, 
-            GetEventQueue()->GetCurrentCycle() + p->tCAS + p->tBURST + decLat );
+            GetEventQueue()->GetCurrentCycle() + p->tCAS + p->tADDER + p->tBURST + decLat );
 
 
     /* Calculate energy */
@@ -1131,6 +1143,8 @@ bool SubArray::IsIssuable( NVMainRequest *req, FailReason *reason )
             rv = false;
             if( reason ) 
                 reason->reason = SUBARRAY_TIMING;
+        } else {
+            rv = GetChild( req )->IsIssuable( req, reason );
         }
 
         if( rv == false )
@@ -1153,6 +1167,8 @@ bool SubArray::IsIssuable( NVMainRequest *req, FailReason *reason )
             rv = false;
             if( reason ) 
                 reason->reason = SUBARRAY_TIMING;
+        } else {
+            rv = GetChild( req )->IsIssuable( req, reason );
         }
     }
     else if( req->type == WRITE || req->type == WRITE_PRECHARGE )
@@ -1474,7 +1490,7 @@ void SubArray::CalculateStats( )
     actWaitAverage = static_cast<double>(actWaitTotal) / static_cast<double>(actWaits);
 
     /* Print a histogram as a python-style dict. */
-    mlcTimingHisto = PyDictHistogram<uint64_t, uint64_t>( mlcTimingMap );
+    mlcTimingHisto = PyDictHistogram<uint64_t, uint64_t>( mlcTimingMap ); 
     cancelCountHisto = PyDictHistogram<uint64_t, uint64_t>( cancelCountMap );
     wpPauseHisto = PyDictHistogram<double, uint64_t>( wpPauseMap );
     wpCancelHisto = PyDictHistogram<double, uint64_t>( wpCancelMap );

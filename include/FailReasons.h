@@ -43,6 +43,7 @@ enum FailReasons { UNKNOWN_FAILURE,
                    SUBARRAY_TIMING,
                    BANK_TIMING,
                    RANK_TIMING,
+                   ADDER_TIMING,
                    UNSUPPORTED_COMMAND
                  };
 
